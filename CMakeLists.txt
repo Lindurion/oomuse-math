@@ -96,7 +96,8 @@ enable_testing()
 find_package(GTest REQUIRED)
 
 set(OOMUSE_MATH_TEST_FILES
-    test/oomuse/math/Constants_test.cpp)
+    test/oomuse/math/Constants_test.cpp
+    test/oomuse/math/integers_test.cpp)
 
 add_executable(oomuse-math_test ${OOMUSE_MATH_TEST_FILES})
 
