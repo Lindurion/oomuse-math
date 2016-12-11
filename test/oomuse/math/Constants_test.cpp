@@ -16,9 +16,12 @@
 
 #include "oomuse/math/Constants.h"
 
+#include <cmath>
+
 #include "gtest/gtest.h"
 
 using oomuse::Constants;
+using std::fabs;
 
 namespace {
 
@@ -35,11 +38,14 @@ TEST(Constants, withDouble) {
 }
 
 
+void expectNear(long double a, long double b) {
+  EXPECT_LT(fabs(a - b), 0.000000000000001L);
+}
+
+
 TEST(Constants, withLongDouble) {
-  EXPECT_NEAR(2.718281828459045L, Constants<long double>::E,
-              0.000000000000001L);
-  EXPECT_NEAR(3.141592653589793L, Constants<long double>::PI,
-              0.000000000000001L);
+  expectNear(2.718281828459045L, Constants<long double>::E);
+  expectNear(3.141592653589793L, Constants<long double>::PI);
 }
 
 

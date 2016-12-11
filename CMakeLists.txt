@@ -16,19 +16,9 @@ cmake_minimum_required(VERSION 3.0.2)
 project(oomuse-math)
 
 
-################################################################################
-# Build Configuration Options (Set via CMake GUI)
-################################################################################
-
-set(OOMUSE_CRT_LINKAGE "dynamic" CACHE STRING
-    "'static' or 'dynamic' C runtime library linkage for Visual C++")
-
-# Use OOMUSE_CRT_LINKAGE to determine which gtest lib to link against.
-if(OOMUSE_CRT_LINKAGE STREQUAL "static")
-  set(GTEST_MSVC_SEARCH "MT" CACHE STRING "" "FORCE")
-else()
-  set(GTEST_MSVC_SEARCH "MD" CACHE STRING "" "FORCE")
-endif()
+# Dependencies and their build configuration is handled by conan output:
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
 
 
 ################################################################################
@@ -45,13 +35,6 @@ if(MSVC)
       CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE)
 
   foreach(flag_list_name ${compiler_flag_lists})
-    # Set C runtime library linkage.
-    if(OOMUSE_CRT_LINKAGE STREQUAL "static")
-      string(REPLACE "/MD" "/MT" ${flag_list_name} "${${flag_list_name}}")
-    else()
-      string(REPLACE "/MT" "/MD" ${flag_list_name} "${${flag_list_name}}")
-    endif()
-
     # Use stricter warnings.
     string(REPLACE "/W3" "/W4" ${flag_list_name} "${${flag_list_name}}")
   endforeach()
@@ -76,7 +59,7 @@ string(REPLACE ";" " " oomuse_compile_flags "${oomuse_compile_flags}")
 
 
 ################################################################################
-# oomuse-math Library (Header Only)
+# oomuse-math Header-Only Library
 ################################################################################
 
 add_library(oomuse-math INTERFACE)
@@ -84,32 +67,29 @@ target_include_directories(oomuse-math INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/oomuse
-    DESTINATION include)
-
 
 ################################################################################
 # oomuse-math Tests
 ################################################################################
 
-enable_testing()
-find_package(GTest REQUIRED)
+# Testing behavior gets specified & defined through conan option.
+if(OOMUSE_MATH_TESTING)
+  enable_testing()
 
-set(OOMUSE_MATH_TEST_FILES
-    test/oomuse/math/Constants_test.cpp
-    test/oomuse/math/integers_test.cpp)
+  set(OOMUSE_MATH_TEST_FILES
+      test/oomuse/math/Constants_test.cpp
+      test/oomuse/math/integers_test.cpp)
 
-add_executable(oomuse-math_test ${OOMUSE_MATH_TEST_FILES})
+  add_executable(oomuse-math_test ${OOMUSE_MATH_TEST_FILES})
 
-set_property(TARGET oomuse-math_test
-    APPEND PROPERTY INCLUDE_DIRECTORIES ${GTEST_INCLUDE_DIRS})
-set_property(TARGET oomuse-math_test PROPERTY CXX_STANDARD 14)
-set_property(TARGET oomuse-math_test
-    APPEND PROPERTY COMPILE_FLAGS "${oomuse_compile_flags}")
-set_property(TARGET oomuse-math_test
-    APPEND PROPERTY COMPILE_DEFINITIONS "${oomuse_compile_definitions}")
+  set_property(TARGET oomuse-math_test PROPERTY CXX_STANDARD 14)
+  set_property(TARGET oomuse-math_test
+      APPEND PROPERTY COMPILE_FLAGS "${oomuse_compile_flags}")
+  set_property(TARGET oomuse-math_test
+      APPEND PROPERTY COMPILE_DEFINITIONS "${oomuse_compile_definitions}")
 
-target_link_libraries(oomuse-math_test oomuse-math)
-target_link_libraries(oomuse-math_test ${GTEST_BOTH_LIBRARIES})
+  target_link_libraries(oomuse-math_test oomuse-math)
+  target_link_libraries(oomuse-math_test ${CONAN_LIBS})
 
-add_test(run_oomuse-math_test oomuse-math_test)
+  add_test(NAME run_oomuse-math_test COMMAND oomuse-math_test)
+endif()
